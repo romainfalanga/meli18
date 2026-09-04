@@ -531,35 +531,39 @@
             updateActiveTrack();
         }
 
-        // Index de la musique qui suivra la musique en cours
-        function getNextIndex() {
+        // Index de la musique likée qui suit (ou précède) la position actuelle,
+        // en sautant les musiques non likées. Balayer à partir de la position
+        // courante plutôt que chercher celle-ci dans la liste des likées est
+        // indispensable : sinon, dès que la musique en cours est déslikée, la
+        // recherche échoue et l'enchaînement part au mauvais endroit.
+        function getAdjacentIndex(direction) {
             const orderedTracks = getOrderedTracks();
-            const likedIndices = orderedTracks
-                .map((t, i) => likedTracks.includes(t.id) ? i : -1)
-                .filter(i => i !== -1);
+            const total = orderedTracks.length;
+            if (!total) return -1;
 
-            if (likedIndices.length === 0) return -1;
-
-            const currentPos = likedIndices.indexOf(currentTrackIndex);
-            return likedIndices[(currentPos + 1) % likedIndices.length];
+            for (let step = 1; step <= total; step++) {
+                const i = (currentTrackIndex + direction * step + total * step) % total;
+                if (likedTracks.includes(orderedTracks[i].id)) return i;
+            }
+            return -1;
         }
 
-        // Préchargement complet de toutes les musiques en mémoire : à la fin
-        // d'une piste, écran verrouillé, le système bride le réseau et un
-        // téléchargement à ce moment-là échoue par intermittence — chaque
-        // enchaînement doit donc pouvoir se faire sans aucun accès réseau
-        const blobUrls = {};
-        function preloadTrack(track) {
-            if (!track || blobUrls[track.id]) return;
-            blobUrls[track.id] = 'pending';
-            fetch(track.file)
-                .then(resp => (resp.ok ? resp.blob() : Promise.reject()))
-                .then(blob => { blobUrls[track.id] = URL.createObjectURL(blob); })
-                .catch(() => { delete blobUrls[track.id]; });
+        function getNextIndex() {
+            return getAdjacentIndex(1);
         }
 
+        // Mise en cache HTTP de toutes les musiques dès l'ouverture de la page.
+        // Les fichiers sont servis avec un cache longue durée (voir _headers),
+        // donc une fois téléchargés ici, chaque changement de piste se fait
+        // depuis le cache du navigateur, sans accès réseau — indispensable
+        // écran verrouillé, où le système bride le réseau.
+        // Volontairement PAS de blob: URL : sur iOS, une source blob prive le
+        // lecteur du contrôle système (écran de verrouillage) et fait couper
+        // la lecture en arrière-plan.
         function preloadAllTracks() {
-            tracks.forEach(preloadTrack);
+            tracks.forEach(track => {
+                fetch(track.file, { cache: 'force-cache' }).catch(() => {});
+            });
         }
 
         // Basculer vers une autre musique, de façon SYNCHRONE : play() doit
@@ -587,8 +591,7 @@
             // court silence), soit terminée (enchaînement automatique) : un
             // simple changement de source suffit, et ne pas toucher au lecteur
             // préserve la session audio quand l'écran est verrouillé
-            const blobUrl = blobUrls[track.id];
-            audio.src = (blobUrl && blobUrl !== 'pending') ? blobUrl : track.file;
+            audio.src = track.file;
             progressFill.style.width = '0%';
             currentTime.textContent = '0:00';
             totalTime.textContent = '0:00';
@@ -637,15 +640,9 @@
 
         // Previous track
         function prevTrack() {
-            const orderedTracks = getOrderedTracks();
-            const likedIndices = orderedTracks
-                .map((t, i) => likedTracks.includes(t.id) ? i : -1)
-                .filter(i => i !== -1);
-            
-            if (likedIndices.length === 0) return;
-
-            const currentPos = likedIndices.indexOf(currentTrackIndex);
-            switchTrack(likedIndices[(currentPos - 1 + likedIndices.length) % likedIndices.length]);
+            const prevIndex = getAdjacentIndex(-1);
+            if (prevIndex === -1) return;
+            switchTrack(prevIndex);
         }
 
         // Format time
@@ -684,13 +681,15 @@
             if (isPlaying) {
                 pause();
             } else {
-                if (!audio.src) {
-                    const orderedTracks = getOrderedTracks();
+                const orderedTracks = getOrderedTracks();
+                const current = orderedTracks[currentTrackIndex];
+                // Repartir sur la première musique likée si rien n'est chargé
+                // ou si la musique en cours vient d'être déslikée
+                if (!audio.src || !current || !likedTracks.includes(current.id)) {
                     const firstLiked = orderedTracks.findIndex(t => likedTracks.includes(t.id));
-                    if (firstLiked !== -1) {
-                        currentTrackIndex = firstLiked;
-                        loadTrack();
-                    }
+                    if (firstLiked === -1) return;
+                    currentTrackIndex = firstLiked;
+                    loadTrack();
                 }
                 play();
             }
@@ -739,18 +738,17 @@
             }
         });
 
-        // Si la lecture depuis une version préchargée échoue (bug blob sur
-        // certains navigateurs), retomber sur le fichier réseau
+        // Si le chargement d'une piste échoue, réessayer une fois plutôt que
+        // de laisser la lecture s'arrêter
+        let retriedTrack = null;
         audio.addEventListener('error', () => {
             const track = getOrderedTracks()[currentTrackIndex];
-            if (track && audio.src.startsWith('blob:')) {
-                delete blobUrls[track.id];
-                audio.src = track.file;
-                if (isPlaying) {
-                    audio.play().catch(() => {});
-                }
-            }
+            if (!track || !isPlaying || retriedTrack === track.id) return;
+            retriedTrack = track.id;
+            audio.src = track.file;
+            audio.play().catch(() => {});
         });
+        audio.addEventListener('playing', () => { retriedTrack = null; });
 
         // Click direct sur la timeline
         progressBar.addEventListener('click', (e) => {

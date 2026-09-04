@@ -1,0 +1,8 @@
+# Les musiques ne changent jamais de nom sans changer de contenu : un cache
+# longue durée permet au navigateur de les rejouer sans aucun accès réseau,
+# ce dont dépend l'enchaînement des pistes quand le téléphone est verrouillé.
+/audio/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/artwork-*.png
+  Cache-Control: public, max-age=31536000, immutable
