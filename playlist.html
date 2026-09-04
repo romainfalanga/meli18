@@ -81,6 +81,32 @@
             justify-content: center;
         }
 
+        /* Badge "1" affiché en mode répétition d'une seule musique */
+        #repeatBtn {
+            position: relative;
+        }
+
+        .repeat-one-badge {
+            display: none;
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #000;
+            color: var(--gold);
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 20px;
+            text-align: center;
+            border: 2px solid var(--gold);
+        }
+
+        #repeatBtn.repeat-one .repeat-one-badge {
+            display: block;
+        }
+
         .main-player-controls button {
             width: 50px;
             height: 50px;
@@ -380,6 +406,7 @@
                         </button>
                         <button id="repeatBtn" title="Répéter">
                             <i class="fas fa-repeat"></i>
+                            <span class="repeat-one-badge">1</span>
                         </button>
                     </div>
                 </div>
@@ -415,7 +442,7 @@
         let currentTrackIndex = 0;
         let isPlaying = false;
         let isShuffled = false;
-        let repeatMode = 'off'; // 'off', 'all', 'one'
+        let repeatMode = 'all'; // 'all' (répéter toute la playlist) ou 'one' (répéter la musique en cours)
 
         // Initialiser likedTracks : si localStorage existe, on vérifie que tous les IDs y sont
         let likedTracks = JSON.parse(localStorage.getItem('likedTracks')) || [];
@@ -650,17 +677,8 @@
         });
 
         repeatBtn.addEventListener('click', () => {
-            const modes = ['off', 'all', 'one'];
-            const currentIndex = modes.indexOf(repeatMode);
-            repeatMode = modes[(currentIndex + 1) % modes.length];
-            
-            if (repeatMode === 'one') {
-                repeatBtn.style.background = 'linear-gradient(135deg, #5f27cd, #8854d0)';
-            } else if (repeatMode === 'all') {
-                repeatBtn.style.background = 'linear-gradient(135deg, #00d2d3, #54a0ff)';
-            } else {
-                repeatBtn.style.background = 'linear-gradient(135deg, var(--gold), #d4a574)';
-            }
+            repeatMode = repeatMode === 'all' ? 'one' : 'all';
+            repeatBtn.classList.toggle('repeat-one', repeatMode === 'one');
         });
 
         audio.addEventListener('timeupdate', () => {
