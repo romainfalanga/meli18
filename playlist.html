@@ -417,43 +417,41 @@
     </section>
 
     <!-- Audio element caché -->
-    <audio id="mainAudio" preload="auto"></audio>
+    <audio id="mainAudio" src="audio/playlist-complete.mp3" preload="auto"></audio>
 
     <script>
-        console.log('🎉 Joyeux Anniversaire Mélissa ! 🎂');
-        console.log('Ce site a été créé avec amour par Romain ❤️');
+        console.log('%c🎉 Joyeux Anniversaire Mélissa ! 🎂', 'font-size: 24px; color: #d4a574; font-weight: bold;');
+        console.log('%cCe site a été créé avec amour par Romain ❤️', 'font-size: 14px; color: #667eea;');
 
-        // Liste complète des musiques
+        // Les 5 musiques sont réunies dans UN SEUL fichier audio, dans cet ordre.
+        // Changer de musique consiste donc à se déplacer dans ce fichier, jamais
+        // à changer la source du lecteur : la lecture n'est ainsi jamais
+        // interrompue, et le lecteur du système (écran de verrouillage, barre de
+        // notifications) reste affiché tant que l'utilisateur n'a pas mis pause.
         const tracks = [
-            { id: 7, title: "Œuvre d'art", file: "audio/au-musee.mp3" },
-            { id: 8, title: "Nouvelles couleurs", file: "audio/nouvelles-couleurs.mp3" },
-            { id: 9, title: "Ma passion", file: "audio/ma-passion-v1.mp3" },
-            { id: 10, title: "Big Bang", file: "audio/big-bang.mp3" },
-            { id: 11, title: "Nuage", file: "audio/nuage.mp3" }
+            { id: 7,  title: "Œuvre d'art",         start: 0,       duration: 103.993 },
+            { id: 8,  title: "Nouvelles couleurs",  start: 103.993, duration: 98.353 },
+            { id: 9,  title: "Ma passion",          start: 202.346, duration: 104.320 },
+            { id: 10, title: "Big Bang",            start: 306.666, duration: 114.920 },
+            { id: 11, title: "Nuage",               start: 421.586, duration: 152.360 }
         ];
 
-        // Ordre de la playlist
-        const defaultOrder = [7, 8, 9, 10, 11];
+        // Marge prise avant la fin d'une musique pour enchaîner sans laisser
+        // entendre le début de la suivante dans le fichier
+        const LEAD = 0.35;
 
         // État de l'application
         let currentTrackIndex = 0;
         let isPlaying = false;
-        let repeatMode = 'all'; // 'all' (répéter toute la playlist) ou 'one' (répéter la musique en cours)
+        let hasStarted = false;
+        let repeatMode = 'all'; // 'all' (toute la playlist) ou 'one' (musique en cours)
 
-        // Initialiser likedTracks : si localStorage existe, on vérifie que tous les IDs y sont
-        let likedTracks = JSON.parse(localStorage.getItem('likedTracks')) || [];
+        // Musiques likées (toutes par défaut)
         const allTrackIds = tracks.map(t => t.id);
-        
-        // Si likedTracks est vide ou ne contient pas tous les IDs, on ajoute les manquants
+        let likedTracks = JSON.parse(localStorage.getItem('likedTracks')) || [];
+        likedTracks = likedTracks.filter(id => allTrackIds.includes(id));
         if (likedTracks.length === 0) {
-            likedTracks = allTrackIds;
-        } else {
-            // Ajouter les nouveaux IDs qui ne sont pas encore dans likedTracks
-            allTrackIds.forEach(id => {
-                if (!likedTracks.includes(id)) {
-                    likedTracks.push(id);
-                }
-            });
+            likedTracks = allTrackIds.slice();
         }
         localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
 
@@ -465,153 +463,119 @@
         const repeatBtn = document.getElementById('repeatBtn');
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
-        const currentTime = document.getElementById('currentTime');
-        const totalTime = document.getElementById('totalTime');
+        const currentTimeEl = document.getElementById('currentTime');
+        const totalTimeEl = document.getElementById('totalTime');
         const currentTrackTitle = document.getElementById('currentTrackTitle');
-        const currentTrackStatus = document.getElementById('currentTrackStatus');
         const playlistTracks = document.getElementById('playlistTracks');
 
-        // Obtenir les musiques dans l'ordre de la playlist
-        function getOrderedTracks() {
-            return defaultOrder.map(id => tracks.find(t => t.id === id)).filter(Boolean);
+        function trackEnd(i) {
+            return tracks[i].start + tracks[i].duration;
         }
 
-        // Initialiser la playlist
+        function isLiked(i) {
+            return likedTracks.includes(tracks[i].id);
+        }
+
+        // Musique likée suivante (direction 1) ou précédente (-1), en sautant
+        // les musiques non likées
+        function getAdjacentIndex(direction) {
+            const total = tracks.length;
+            for (let step = 1; step <= total; step++) {
+                const i = (currentTrackIndex + direction * step + total * step) % total;
+                if (isLiked(i)) return i;
+            }
+            return -1;
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) seconds = 0;
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Se déplacer dans le fichier, même si les métadonnées ne sont pas
+        // encore chargées au moment du clic
+        let pendingSeek = null;
+        function seekTo(time) {
+            if (audio.readyState > 0) {
+                audio.currentTime = time;
+            } else {
+                pendingSeek = time;
+            }
+        }
+
+        audio.addEventListener('loadedmetadata', () => {
+            if (pendingSeek !== null) {
+                audio.currentTime = pendingSeek;
+                pendingSeek = null;
+            }
+        });
+
+        // Construction de la liste
         function initPlaylist() {
             playlistTracks.innerHTML = '';
-            const orderedTracks = getOrderedTracks();
-            
-            orderedTracks.forEach((track, index) => {
-                const isLiked = likedTracks.includes(track.id);
-                const trackEl = document.createElement('div');
-                trackEl.className = `playlist-track ${!isLiked ? 'unliked' : ''}`;
-                trackEl.dataset.index = index;
-                trackEl.dataset.trackId = track.id;
-
-                trackEl.innerHTML = `
+            tracks.forEach((track, index) => {
+                const liked = isLiked(index);
+                const el = document.createElement('div');
+                el.className = 'playlist-track' + (liked ? '' : ' unliked');
+                el.dataset.index = index;
+                el.innerHTML = `
                     <div class="track-number">${index + 1}</div>
                     <div class="track-info-wrapper">
                         <div class="track-title-playlist">${track.title}</div>
                     </div>
-                    <button class="like-btn ${isLiked ? 'liked' : 'unliked'}" data-id="${track.id}">
+                    <button class="like-btn ${liked ? 'liked' : 'unliked'}" data-id="${track.id}">
                         <i class="fas fa-heart"></i>
                     </button>
                 `;
-                
-                // Click sur la musique pour la jouer
-                trackEl.addEventListener('click', (e) => {
-                    if (!e.target.closest('.like-btn')) {
-                        if (isLiked) {
-                            switchTrack(index);
-                        }
-                    }
+
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('.like-btn')) return;
+                    if (isLiked(index)) selectTrack(index);
                 });
 
-                // Click sur le bouton like
-                const likeBtn = trackEl.querySelector('.like-btn');
-                likeBtn.addEventListener('click', (e) => {
+                el.querySelector('.like-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
                     toggleLike(track.id);
                 });
 
-                playlistTracks.appendChild(trackEl);
+                playlistTracks.appendChild(el);
             });
+            updateActiveTrack();
         }
 
-        // Toggle like
         function toggleLike(trackId) {
-            const index = likedTracks.indexOf(trackId);
-            if (index > -1) {
-                likedTracks.splice(index, 1);
+            const pos = likedTracks.indexOf(trackId);
+            if (pos > -1) {
+                likedTracks.splice(pos, 1);
             } else {
                 likedTracks.push(trackId);
             }
             localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
             initPlaylist();
-            updateActiveTrack();
         }
 
-        // Index de la musique likée qui suit (ou précède) la position actuelle,
-        // en sautant les musiques non likées. Balayer à partir de la position
-        // courante plutôt que chercher celle-ci dans la liste des likées est
-        // indispensable : sinon, dès que la musique en cours est déslikée, la
-        // recherche échoue et l'enchaînement part au mauvais endroit.
-        function getAdjacentIndex(direction) {
-            const orderedTracks = getOrderedTracks();
-            const total = orderedTracks.length;
-            if (!total) return -1;
-
-            for (let step = 1; step <= total; step++) {
-                const i = (currentTrackIndex + direction * step + total * step) % total;
-                if (likedTracks.includes(orderedTracks[i].id)) return i;
-            }
-            return -1;
-        }
-
-        function getNextIndex() {
-            return getAdjacentIndex(1);
-        }
-
-        // Mise en cache HTTP de toutes les musiques dès l'ouverture de la page.
-        // Les fichiers sont servis avec un cache longue durée (voir _headers),
-        // donc une fois téléchargés ici, chaque changement de piste se fait
-        // depuis le cache du navigateur, sans accès réseau — indispensable
-        // écran verrouillé, où le système bride le réseau.
-        // Volontairement PAS de blob: URL : sur iOS, une source blob prive le
-        // lecteur du contrôle système (écran de verrouillage) et fait couper
-        // la lecture en arrière-plan.
-        function preloadAllTracks() {
-            tracks.forEach(track => {
-                fetch(track.file, { cache: 'force-cache' }).catch(() => {});
+        function updateActiveTrack() {
+            document.querySelectorAll('.playlist-track').forEach((el, index) => {
+                el.classList.toggle('active', hasStarted && index === currentTrackIndex);
             });
         }
 
-        // Basculer vers une autre musique, de façon SYNCHRONE : play() doit
-        // rester dans le geste utilisateur, sans quoi iOS n'enregistre pas le
-        // lecteur système et coupe la lecture en écran verrouillé. Les
-        // musiques étant préchargées en mémoire et le lecteur mis en pause
-        // avant le changement de source, la transition est instantanée et
-        // sans bruit
-        function switchTrack(index) {
-            currentTrackIndex = index;
-            if (!audio.paused && !audio.ended) {
-                audio.pause();
-            }
-            loadTrack();
-            play();
-        }
-
-        // Charger une musique
-        function loadTrack() {
-            const orderedTracks = getOrderedTracks();
-            const track = orderedTracks[currentTrackIndex];
-            if (!track) return;
-
-            // Ici la piste est soit déjà en pause (bascule manuelle, après le
-            // court silence), soit terminée (enchaînement automatique) : un
-            // simple changement de source suffit, et ne pas toucher au lecteur
-            // préserve la session audio quand l'écran est verrouillé
-            audio.src = track.file;
-            progressFill.style.width = '0%';
-            currentTime.textContent = '0:00';
-            totalTime.textContent = '0:00';
-            currentTrackTitle.textContent = track.title;
+        function updateTrackUI() {
+            const track = tracks[currentTrackIndex];
+            currentTrackTitle.textContent = hasStarted ? track.title : 'Sélectionne une musique';
+            totalTimeEl.textContent = formatTime(track.duration);
             updateActiveTrack();
             updateMediaSession();
         }
 
-        // Mettre à jour la musique active
-        function updateActiveTrack() {
-            document.querySelectorAll('.playlist-track').forEach((el, index) => {
-                el.classList.toggle('active', index === currentTrackIndex);
-            });
-        }
-
-        // Play
+        // Lecture / pause : le lecteur n'est jamais rechargé, seulement mis en
+        // pause par l'utilisateur
         function play() {
+            hasStarted = true;
             const playPromise = audio.play();
             if (playPromise !== undefined) {
-                // Ignorer l'interruption si une autre musique est chargée entre-temps
                 playPromise.catch(() => {});
             }
             isPlaying = true;
@@ -621,7 +585,6 @@
             }
         }
 
-        // Pause
         function pause() {
             audio.pause();
             isPlaying = false;
@@ -631,68 +594,150 @@
             }
         }
 
-        // Next track
+        function selectTrack(index) {
+            currentTrackIndex = index;
+            hasStarted = true;
+            seekTo(tracks[index].start);
+            updateTrackUI();
+            play();
+        }
+
         function nextTrack() {
-            const nextIndex = getNextIndex();
-            if (nextIndex === -1) return;
-            switchTrack(nextIndex);
+            const i = getAdjacentIndex(1);
+            if (i === -1) return;
+            selectTrack(i);
         }
 
-        // Previous track
         function prevTrack() {
-            const prevIndex = getAdjacentIndex(-1);
-            if (prevIndex === -1) return;
-            switchTrack(prevIndex);
+            const i = getAdjacentIndex(-1);
+            if (i === -1) return;
+            selectTrack(i);
         }
 
-        // Format time
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-
-        // Media Session API pour les contrôles sur écran de verrouillage
+        // Contrôles du système (écran de verrouillage / barre de notifications)
+        let lastPositionUpdate = 0;
         function updateMediaSession() {
-            if ('mediaSession' in navigator) {
-                const orderedTracks = getOrderedTracks();
-                const track = orderedTracks[currentTrackIndex];
-                if (!track) return;
-                
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: track.title,
-                    artist: 'Romain',
-                    album: 'Playlist pour Mélissa',
-                    artwork: [
-                        { src: 'artwork-192.png', sizes: '192x192', type: 'image/png' },
-                        { src: 'artwork-512.png', sizes: '512x512', type: 'image/png' }
-                    ]
-                });
+            if (!('mediaSession' in navigator)) return;
+            const track = tracks[currentTrackIndex];
 
-                navigator.mediaSession.setActionHandler('play', play);
-                navigator.mediaSession.setActionHandler('pause', pause);
-                navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
-                navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
-            }
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: track.title,
+                artist: 'Romain',
+                album: 'Playlist pour Mélissa',
+                artwork: [
+                    { src: 'artwork-192.png', sizes: '192x192', type: 'image/png' },
+                    { src: 'artwork-512.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('play', () => play());
+            navigator.mediaSession.setActionHandler('pause', () => pause());
+            navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
+            navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
+            updatePositionState();
         }
 
-        // Event listeners
+        function updatePositionState() {
+            if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+            const track = tracks[currentTrackIndex];
+            const position = Math.min(Math.max(audio.currentTime - track.start, 0), track.duration);
+            try {
+                navigator.mediaSession.setPositionState({
+                    duration: track.duration,
+                    position: position,
+                    playbackRate: audio.playbackRate || 1
+                });
+            } catch (e) {}
+        }
+
+        // Suivi de la lecture et passage d'une musique à l'autre
+        audio.addEventListener('timeupdate', () => {
+            const t = audio.currentTime;
+            const track = tracks[currentTrackIndex];
+            const end = trackEnd(currentTrackIndex);
+
+            if (repeatMode === 'one') {
+                if (t >= end - LEAD) {
+                    seekTo(track.start);
+                    return;
+                }
+            } else if (t >= end - LEAD) {
+                const next = getAdjacentIndex(1);
+                if (next === -1) {
+                    pause();
+                    return;
+                }
+                if (next === currentTrackIndex + 1) {
+                    // Musique suivante contiguë dans le fichier : la lecture
+                    // continue d'elle-même, sans le moindre saut
+                    if (t >= end) {
+                        currentTrackIndex = next;
+                        updateTrackUI();
+                    }
+                } else {
+                    currentTrackIndex = next;
+                    seekTo(tracks[next].start);
+                    updateTrackUI();
+                    return;
+                }
+            }
+
+            const elapsed = Math.min(Math.max(t - tracks[currentTrackIndex].start, 0), tracks[currentTrackIndex].duration);
+            progressFill.style.width = (elapsed / tracks[currentTrackIndex].duration * 100) + '%';
+            currentTimeEl.textContent = formatTime(elapsed);
+            totalTimeEl.textContent = formatTime(tracks[currentTrackIndex].duration);
+
+            const now = Date.now();
+            if (now - lastPositionUpdate > 1000) {
+                lastPositionUpdate = now;
+                updatePositionState();
+            }
+        });
+
+        // Sécurité : fin du fichier complet (ne devrait pas être atteinte)
+        audio.addEventListener('ended', () => {
+            const i = getAdjacentIndex(1);
+            if (i === -1) {
+                pause();
+                return;
+            }
+            currentTrackIndex = i;
+            seekTo(tracks[i].start);
+            updateTrackUI();
+            play();
+        });
+
+        // Si le chargement échoue, réessayer une fois plutôt que de s'arrêter
+        let retried = false;
+        audio.addEventListener('error', () => {
+            if (retried || !isPlaying) return;
+            retried = true;
+            const position = audio.currentTime;
+            audio.load();
+            seekTo(position);
+            audio.play().catch(() => {});
+        });
+        audio.addEventListener('playing', () => {
+            retried = false;
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+            updateMediaSession();
+        });
+
+        // Boutons
         playBtn.addEventListener('click', () => {
             if (isPlaying) {
                 pause();
-            } else {
-                const orderedTracks = getOrderedTracks();
-                const current = orderedTracks[currentTrackIndex];
-                // Repartir sur la première musique likée si rien n'est chargé
-                // ou si la musique en cours vient d'être déslikée
-                if (!audio.src || !current || !likedTracks.includes(current.id)) {
-                    const firstLiked = orderedTracks.findIndex(t => likedTracks.includes(t.id));
-                    if (firstLiked === -1) return;
-                    currentTrackIndex = firstLiked;
-                    loadTrack();
-                }
-                play();
+                return;
             }
+            if (!hasStarted || !isLiked(currentTrackIndex)) {
+                const first = tracks.findIndex((t, i) => isLiked(i));
+                if (first === -1) return;
+                selectTrack(first);
+                return;
+            }
+            play();
         });
 
         prevBtn.addEventListener('click', prevTrack);
@@ -703,131 +748,56 @@
             repeatBtn.classList.toggle('repeat-one', repeatMode === 'one');
         });
 
-        audio.addEventListener('timeupdate', () => {
-            if (audio.duration) {
-                const progress = (audio.currentTime / audio.duration) * 100;
-                progressFill.style.width = progress + '%';
-                currentTime.textContent = formatTime(audio.currentTime);
-                totalTime.textContent = formatTime(audio.duration);
-            }
-        });
-
-        audio.addEventListener('ended', () => {
-            if (repeatMode === 'one') {
-                audio.currentTime = 0;
-                play();
-            } else {
-                nextTrack();
-            }
-        });
-
-        // Filet de sécurité : si un démarrage a échoué faute de données
-        // (réseau bridé écran verrouillé), relancer dès qu'elles arrivent
-        audio.addEventListener('canplay', () => {
-            if (isPlaying && audio.paused) {
-                audio.play().catch(() => {});
-            }
-        });
-
-        // (Ré)affirmer le lecteur système à chaque démarrage effectif :
-        // certaines plateformes ignorent les métadonnées posées avant play()
-        audio.addEventListener('playing', () => {
-            updateMediaSession();
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.playbackState = 'playing';
-            }
-        });
-
-        // Si le chargement d'une piste échoue, réessayer une fois plutôt que
-        // de laisser la lecture s'arrêter
-        let retriedTrack = null;
-        audio.addEventListener('error', () => {
-            const track = getOrderedTracks()[currentTrackIndex];
-            if (!track || !isPlaying || retriedTrack === track.id) return;
-            retriedTrack = track.id;
-            audio.src = track.file;
-            audio.play().catch(() => {});
-        });
-        audio.addEventListener('playing', () => { retriedTrack = null; });
-
-        // Click direct sur la timeline
-        progressBar.addEventListener('click', (e) => {
+        // Barre de progression : déplacement à l'intérieur de la musique en cours
+        function seekFromPointer(clientX) {
             const rect = progressBar.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = percent * audio.duration;
-        });
+            let percent = (clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent));
+            const track = tracks[currentTrackIndex];
+            seekTo(track.start + percent * track.duration);
+            updatePositionState();
+        }
 
-        // Variables pour le drag & drop
         let isDragging = false;
-        let wasPlaying = false;
-        
-        // Fonction pour mettre à jour la position
-        const updateProgress = (e) => {
-            const rect = progressBar.getBoundingClientRect();
-            let percent = (e.clientX - rect.left) / rect.width;
-            percent = Math.max(0, Math.min(1, percent)); // Limiter entre 0 et 1
-            audio.currentTime = percent * audio.duration;
-        };
-        
-        // Fonction pour démarrer le drag (souris et tactile)
+
+        progressBar.addEventListener('click', (e) => {
+            if (!hasStarted) return;
+            seekFromPointer(e.clientX);
+        });
+
         const startDrag = (e) => {
+            if (!hasStarted) return;
             isDragging = true;
-            wasPlaying = !audio.paused;
-            
-            // Mettre en pause pendant le drag
-            if (wasPlaying) {
-                audio.pause();
-            }
-            
             progressBar.classList.add('dragging');
             progressFill.classList.add('dragging');
-            
-            // Support tactile
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            updateProgress({ clientX });
-            
+            seekFromPointer(e.touches ? e.touches[0].clientX : e.clientX);
             e.preventDefault();
         };
-        
-        // Fonction pour gérer le mouvement
+
         const onDrag = (e) => {
             if (!isDragging) return;
-            
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            updateProgress({ clientX });
-            
+            seekFromPointer(e.touches ? e.touches[0].clientX : e.clientX);
             e.preventDefault();
         };
-        
-        // Fonction pour terminer le drag
+
         const endDrag = (e) => {
             if (!isDragging) return;
-            
             isDragging = false;
             progressBar.classList.remove('dragging');
             progressFill.classList.remove('dragging');
-            
-            // Reprendre la lecture si elle était en cours
-            if (wasPlaying) {
-                audio.play();
-            }
-            
             e.preventDefault();
         };
-        
-        // Events souris
+
         progressBar.addEventListener('mousedown', startDrag);
         document.addEventListener('mousemove', onDrag);
         document.addEventListener('mouseup', endDrag);
-        
-        // Events tactiles (mobile)
         progressBar.addEventListener('touchstart', startDrag, { passive: false });
         document.addEventListener('touchmove', onDrag, { passive: false });
         document.addEventListener('touchend', endDrag, { passive: false });
 
-        // Initialiser
+        // Initialisation
         initPlaylist();
-        preloadAllTracks();
+        updateTrackUI();
     </script>
 </body>
 </html>
