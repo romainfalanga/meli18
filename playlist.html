@@ -529,6 +529,42 @@
             localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
             initPlaylist();
             updateActiveTrack();
+            // La musique suivante a pu changer avec les likes
+            preloadNext();
+        }
+
+        // Index de la musique qui suivra la musique en cours
+        function getNextIndex() {
+            const orderedTracks = getOrderedTracks();
+            const likedIndices = orderedTracks
+                .map((t, i) => likedTracks.includes(t.id) ? i : -1)
+                .filter(i => i !== -1);
+
+            if (likedIndices.length === 0) return -1;
+
+            const currentPos = likedIndices.indexOf(currentTrackIndex);
+            return likedIndices[(currentPos + 1) % likedIndices.length];
+        }
+
+        // Préchargement complet des musiques en mémoire : à la fin d'une piste,
+        // écran verrouillé, le système bride le réseau et un téléchargement à
+        // ce moment-là échoue par intermittence — la musique suivante doit donc
+        // être déjà entièrement disponible pour que l'enchaînement soit
+        // instantané et sans réseau
+        const blobUrls = {};
+        function preloadTrack(track) {
+            if (!track || blobUrls[track.id]) return;
+            blobUrls[track.id] = 'pending';
+            fetch(track.file)
+                .then(resp => (resp.ok ? resp.blob() : Promise.reject()))
+                .then(blob => { blobUrls[track.id] = URL.createObjectURL(blob); })
+                .catch(() => { delete blobUrls[track.id]; });
+        }
+
+        function preloadNext() {
+            const nextIndex = getNextIndex();
+            if (nextIndex === -1) return;
+            preloadTrack(getOrderedTracks()[nextIndex]);
         }
 
         // Basculer vers une autre musique : mettre d'abord l'ancienne en pause,
@@ -583,13 +619,17 @@
             // court silence), soit terminée (enchaînement automatique) : un
             // simple changement de source suffit, et ne pas toucher au lecteur
             // préserve la session audio quand l'écran est verrouillé
-            audio.src = track.file;
+            const blobUrl = blobUrls[track.id];
+            audio.src = (blobUrl && blobUrl !== 'pending') ? blobUrl : track.file;
             progressFill.style.width = '0%';
             currentTime.textContent = '0:00';
             totalTime.textContent = '0:00';
             currentTrackTitle.textContent = track.title;
             updateActiveTrack();
             updateMediaSession();
+
+            // Préparer dès maintenant la musique qui suivra celle-ci
+            preloadNext();
         }
 
         // Mettre à jour la musique active
@@ -625,15 +665,9 @@
 
         // Next track
         function nextTrack() {
-            const orderedTracks = getOrderedTracks();
-            const likedIndices = orderedTracks
-                .map((t, i) => likedTracks.includes(t.id) ? i : -1)
-                .filter(i => i !== -1);
-            
-            if (likedIndices.length === 0) return;
-
-            const currentPos = likedIndices.indexOf(currentTrackIndex);
-            switchTrack(likedIndices[(currentPos + 1) % likedIndices.length]);
+            const nextIndex = getNextIndex();
+            if (nextIndex === -1) return;
+            switchTrack(nextIndex);
         }
 
         // Previous track
@@ -719,6 +753,14 @@
                 play();
             } else {
                 nextTrack();
+            }
+        });
+
+        // Filet de sécurité : si un démarrage a échoué faute de données
+        // (réseau bridé écran verrouillé), relancer dès qu'elles arrivent
+        audio.addEventListener('canplay', () => {
+            if (isPlaying && audio.paused && !switchTimer) {
+                audio.play().catch(() => {});
             }
         });
 
