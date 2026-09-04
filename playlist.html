@@ -223,10 +223,15 @@
             cursor: pointer;
         }
 
-        .playlist-track:hover {
-            background: rgba(255, 215, 0, 0.1);
-            border-color: var(--gold);
-            transform: translateX(5px);
+        /* Survol uniquement sur les appareils avec souris : sur tactile, le
+           navigateur garde le style :hover collé sur le dernier bloc touché,
+           ce qui donne l'impression de deux musiques actives à la fois */
+        @media (hover: hover) and (pointer: fine) {
+            .playlist-track:hover {
+                background: rgba(255, 215, 0, 0.1);
+                border-color: var(--gold);
+                transform: translateX(5px);
+            }
         }
 
         .playlist-track.active {
@@ -420,7 +425,7 @@
     </section>
 
     <!-- Audio element caché -->
-    <audio id="mainAudio" preload="metadata"></audio>
+    <audio id="mainAudio" preload="auto"></audio>
 
     <script>
         console.log('🎉 Joyeux Anniversaire Mélissa ! 🎂');
@@ -544,11 +549,12 @@
             const track = orderedTracks[currentTrackIndex];
             if (!track) return;
 
-            // Couper le son pendant toute la transition : la coupure brutale de
-            // l'ancienne piste et les premières trames décodées de la nouvelle
-            // peuvent produire un claquement audible
-            audio.muted = true;
+            // Remise à zéro complète du lecteur avant de changer de piste :
+            // détacher l'ancienne source purge l'état du décodeur, dont les
+            // restes peuvent produire un bruit au démarrage de la suivante
             audio.pause();
+            audio.removeAttribute('src');
+            audio.load();
             audio.src = track.file;
             audio.load();
             progressFill.style.width = '0%';
@@ -557,11 +563,6 @@
             currentTrackTitle.textContent = track.title;
             updateActiveTrack();
             updateMediaSession();
-
-            // Réactiver le son seulement une fois la nouvelle lecture démarrée
-            audio.addEventListener('playing', () => {
-                setTimeout(() => { audio.muted = false; }, 80);
-            }, { once: true });
         }
 
         // Mettre à jour la musique active
