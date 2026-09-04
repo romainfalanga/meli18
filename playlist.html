@@ -401,9 +401,6 @@
                         </button>
                     </div>
                     <div class="controls-row controls-modes">
-                        <button id="shuffleBtn" title="Aléatoire">
-                            <i class="fas fa-random"></i>
-                        </button>
                         <button id="repeatBtn" title="Répéter">
                             <i class="fas fa-repeat"></i>
                             <span class="repeat-one-badge">1</span>
@@ -441,7 +438,6 @@
         // État de l'application
         let currentTrackIndex = 0;
         let isPlaying = false;
-        let isShuffled = false;
         let repeatMode = 'all'; // 'all' (répéter toute la playlist) ou 'one' (répéter la musique en cours)
 
         // Initialiser likedTracks : si localStorage existe, on vérifie que tous les IDs y sont
@@ -466,7 +462,6 @@
         const playBtn = document.getElementById('playBtn');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
-        const shuffleBtn = document.getElementById('shuffleBtn');
         const repeatBtn = document.getElementById('repeatBtn');
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
@@ -629,17 +624,8 @@
             
             if (likedIndices.length === 0) return;
 
-            let newIndex;
-            if (isShuffled) {
-                // Ne jamais retomber sur la musique en cours
-                let candidates = likedIndices.filter(i => i !== currentTrackIndex);
-                if (candidates.length === 0) candidates = likedIndices;
-                newIndex = candidates[Math.floor(Math.random() * candidates.length)];
-            } else {
-                const currentPos = likedIndices.indexOf(currentTrackIndex);
-                newIndex = likedIndices[(currentPos + 1) % likedIndices.length];
-            }
-            switchTrack(newIndex);
+            const currentPos = likedIndices.indexOf(currentTrackIndex);
+            switchTrack(likedIndices[(currentPos + 1) % likedIndices.length]);
         }
 
         // Previous track
@@ -709,11 +695,6 @@
 
         prevBtn.addEventListener('click', prevTrack);
         nextBtn.addEventListener('click', nextTrack);
-
-        shuffleBtn.addEventListener('click', () => {
-            isShuffled = !isShuffled;
-            shuffleBtn.style.background = isShuffled ? 'linear-gradient(135deg, #ff4757, #ff6b81)' : 'linear-gradient(135deg, var(--gold), #d4a574)';
-        });
 
         repeatBtn.addEventListener('click', () => {
             repeatMode = repeatMode === 'all' ? 'one' : 'all';
