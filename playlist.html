@@ -66,12 +66,13 @@
             color: rgba(255, 255, 255, 0.6);
         }
 
+        /* Deux rangées : précédent / lecture / suivant puis aléatoire / répéter */
         .main-player-controls {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
             justify-content: center;
-            flex-wrap: wrap;
         }
 
         .controls-row {
@@ -327,12 +328,6 @@
                 padding: 1.5rem;
             }
 
-            /* Boutons sur deux rangées : précédent/lecture/suivant puis aléatoire/répéter */
-            .main-player-controls {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
             .current-track-title {
                 font-size: 1.2rem;
             }
@@ -512,9 +507,7 @@
                 trackEl.addEventListener('click', (e) => {
                     if (!e.target.closest('.like-btn')) {
                         if (isLiked) {
-                            currentTrackIndex = index;
-                            loadTrack();
-                            play();
+                            switchTrack(index);
                         }
                     }
                 });
@@ -541,6 +534,43 @@
             localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
             initPlaylist();
             updateActiveTrack();
+        }
+
+        // Basculer vers une autre musique : mettre d'abord l'ancienne en pause,
+        // laisser une demi-seconde de silence, puis lancer la nouvelle —
+        // le lancement immédiat pendant la lecture produit un bruit de
+        // transition sur certains appareils
+        let switchTimer = null;
+        function switchTrack(index) {
+            if (switchTimer) {
+                clearTimeout(switchTimer);
+                switchTimer = null;
+            }
+            const wasPlaying = !audio.paused && !audio.ended;
+            audio.pause();
+            currentTrackIndex = index;
+
+            if (!wasPlaying) {
+                loadTrack();
+                play();
+                return;
+            }
+
+            // Retour visuel immédiat pendant la demi-seconde de silence
+            const track = getOrderedTracks()[index];
+            if (track) {
+                currentTrackTitle.textContent = track.title;
+            }
+            progressFill.style.width = '0%';
+            currentTime.textContent = '0:00';
+            totalTime.textContent = '0:00';
+            updateActiveTrack();
+
+            switchTimer = setTimeout(() => {
+                switchTimer = null;
+                loadTrack();
+                play();
+            }, 500);
         }
 
         // Charger une musique
@@ -599,14 +629,17 @@
             
             if (likedIndices.length === 0) return;
 
+            let newIndex;
             if (isShuffled) {
-                currentTrackIndex = likedIndices[Math.floor(Math.random() * likedIndices.length)];
+                // Ne jamais retomber sur la musique en cours
+                let candidates = likedIndices.filter(i => i !== currentTrackIndex);
+                if (candidates.length === 0) candidates = likedIndices;
+                newIndex = candidates[Math.floor(Math.random() * candidates.length)];
             } else {
                 const currentPos = likedIndices.indexOf(currentTrackIndex);
-                currentTrackIndex = likedIndices[(currentPos + 1) % likedIndices.length];
+                newIndex = likedIndices[(currentPos + 1) % likedIndices.length];
             }
-            loadTrack();
-            play();
+            switchTrack(newIndex);
         }
 
         // Previous track
@@ -619,9 +652,7 @@
             if (likedIndices.length === 0) return;
 
             const currentPos = likedIndices.indexOf(currentTrackIndex);
-            currentTrackIndex = likedIndices[(currentPos - 1 + likedIndices.length) % likedIndices.length];
-            loadTrack();
-            play();
+            switchTrack(likedIndices[(currentPos - 1 + likedIndices.length) % likedIndices.length]);
         }
 
         // Format time
