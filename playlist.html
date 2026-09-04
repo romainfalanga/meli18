@@ -537,9 +537,9 @@
         }
 
         // Basculer vers une autre musique : mettre d'abord l'ancienne en pause,
-        // laisser une demi-seconde de silence, puis lancer la nouvelle —
-        // le lancement immédiat pendant la lecture produit un bruit de
-        // transition sur certains appareils
+        // laisser un court silence, puis lancer la nouvelle — le lancement
+        // immédiat pendant la lecture produit un bruit de transition sur
+        // certains appareils
         let switchTimer = null;
         function switchTrack(index) {
             if (switchTimer) {
@@ -570,7 +570,7 @@
                 switchTimer = null;
                 loadTrack();
                 play();
-            }, 500);
+            }, 200);
         }
 
         // Charger une musique
