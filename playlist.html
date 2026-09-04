@@ -562,46 +562,19 @@
             tracks.forEach(preloadTrack);
         }
 
-        // Basculer vers une autre musique : mettre d'abord l'ancienne en pause,
-        // laisser un court silence, puis lancer la nouvelle — le lancement
-        // immédiat pendant la lecture produit un bruit de transition sur
-        // certains appareils
-        let switchTimer = null;
+        // Basculer vers une autre musique, de façon SYNCHRONE : play() doit
+        // rester dans le geste utilisateur, sans quoi iOS n'enregistre pas le
+        // lecteur système et coupe la lecture en écran verrouillé. Les
+        // musiques étant préchargées en mémoire et le lecteur mis en pause
+        // avant le changement de source, la transition est instantanée et
+        // sans bruit
         function switchTrack(index) {
-            if (switchTimer) {
-                clearTimeout(switchTimer);
-                switchTimer = null;
-            }
-            const wasPlaying = !audio.paused && !audio.ended;
             currentTrackIndex = index;
-
-            if (!wasPlaying) {
-                // Fin naturelle ou lecteur à l'arrêt : enchaîner immédiatement
-                // et sans pause intermédiaire — écran verrouillé, interrompre
-                // le lecteur ferme la session audio et la musique ne peut
-                // plus repartir
-                loadTrack();
-                play();
-                return;
+            if (!audio.paused && !audio.ended) {
+                audio.pause();
             }
-
-            audio.pause();
-
-            // Retour visuel immédiat pendant la demi-seconde de silence
-            const track = getOrderedTracks()[index];
-            if (track) {
-                currentTrackTitle.textContent = track.title;
-            }
-            progressFill.style.width = '0%';
-            currentTime.textContent = '0:00';
-            totalTime.textContent = '0:00';
-            updateActiveTrack();
-
-            switchTimer = setTimeout(() => {
-                switchTimer = null;
-                loadTrack();
-                play();
-            }, 200);
+            loadTrack();
+            play();
         }
 
         // Charger une musique
@@ -694,7 +667,8 @@
                     artist: 'Romain',
                     album: 'Playlist pour Mélissa',
                     artwork: [
-                        { src: 'favicon.png', sizes: '1024x1024', type: 'image/png' }
+                        { src: 'artwork-192.png', sizes: '192x192', type: 'image/png' },
+                        { src: 'artwork-512.png', sizes: '512x512', type: 'image/png' }
                     ]
                 });
 
@@ -751,8 +725,17 @@
         // Filet de sécurité : si un démarrage a échoué faute de données
         // (réseau bridé écran verrouillé), relancer dès qu'elles arrivent
         audio.addEventListener('canplay', () => {
-            if (isPlaying && audio.paused && !switchTimer) {
+            if (isPlaying && audio.paused) {
                 audio.play().catch(() => {});
+            }
+        });
+
+        // (Ré)affirmer le lecteur système à chaque démarrage effectif :
+        // certaines plateformes ignorent les métadonnées posées avant play()
+        audio.addEventListener('playing', () => {
+            updateMediaSession();
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
             }
         });
 
