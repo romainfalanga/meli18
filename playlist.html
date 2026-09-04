@@ -516,8 +516,15 @@
             const orderedTracks = getOrderedTracks();
             const track = orderedTracks[currentTrackIndex];
             if (!track) return;
-            
+
+            // Arrêter proprement la lecture en cours avant de changer de source,
+            // sinon le changement brutal produit un artefact sonore
+            audio.pause();
             audio.src = track.file;
+            audio.load();
+            progressFill.style.width = '0%';
+            currentTime.textContent = '0:00';
+            totalTime.textContent = '0:00';
             currentTrackTitle.textContent = track.title;
             updateActiveTrack();
             updateMediaSession();
@@ -532,7 +539,11 @@
 
         // Play
         function play() {
-            audio.play();
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                // Ignorer l'interruption si une autre musique est chargée entre-temps
+                playPromise.catch(() => {});
+            }
             isPlaying = true;
             playBtn.innerHTML = '<i class="fas fa-pause"></i>';
         }
