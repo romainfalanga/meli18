@@ -544,8 +544,10 @@
             const track = orderedTracks[currentTrackIndex];
             if (!track) return;
 
-            // Arrêter proprement la lecture en cours avant de changer de source,
-            // sinon le changement brutal produit un artefact sonore
+            // Couper le son pendant toute la transition : la coupure brutale de
+            // l'ancienne piste et les premières trames décodées de la nouvelle
+            // peuvent produire un claquement audible
+            audio.muted = true;
             audio.pause();
             audio.src = track.file;
             audio.load();
@@ -555,6 +557,11 @@
             currentTrackTitle.textContent = track.title;
             updateActiveTrack();
             updateMediaSession();
+
+            // Réactiver le son seulement une fois la nouvelle lecture démarrée
+            audio.addEventListener('playing', () => {
+                setTimeout(() => { audio.muted = false; }, 80);
+            }, { once: true });
         }
 
         // Mettre à jour la musique active
