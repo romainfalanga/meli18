@@ -542,14 +542,19 @@
                 switchTimer = null;
             }
             const wasPlaying = !audio.paused && !audio.ended;
-            audio.pause();
             currentTrackIndex = index;
 
             if (!wasPlaying) {
+                // Fin naturelle ou lecteur à l'arrêt : enchaîner immédiatement
+                // et sans pause intermédiaire — écran verrouillé, interrompre
+                // le lecteur ferme la session audio et la musique ne peut
+                // plus repartir
                 loadTrack();
                 play();
                 return;
             }
+
+            audio.pause();
 
             // Retour visuel immédiat pendant la demi-seconde de silence
             const track = getOrderedTracks()[index];
@@ -574,14 +579,11 @@
             const track = orderedTracks[currentTrackIndex];
             if (!track) return;
 
-            // Remise à zéro complète du lecteur avant de changer de piste :
-            // détacher l'ancienne source purge l'état du décodeur, dont les
-            // restes peuvent produire un bruit au démarrage de la suivante
-            audio.pause();
-            audio.removeAttribute('src');
-            audio.load();
+            // Ici la piste est soit déjà en pause (bascule manuelle, après le
+            // court silence), soit terminée (enchaînement automatique) : un
+            // simple changement de source suffit, et ne pas toucher au lecteur
+            // préserve la session audio quand l'écran est verrouillé
             audio.src = track.file;
-            audio.load();
             progressFill.style.width = '0%';
             currentTime.textContent = '0:00';
             totalTime.textContent = '0:00';
@@ -606,6 +608,9 @@
             }
             isPlaying = true;
             playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
         }
 
         // Pause
@@ -613,6 +618,9 @@
             audio.pause();
             isPlaying = false;
             playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'paused';
+            }
         }
 
         // Next track
@@ -660,12 +668,7 @@
                     artist: 'Romain',
                     album: 'Playlist pour Mélissa',
                     artwork: [
-                        { src: 'https://via.placeholder.com/96', sizes: '96x96', type: 'image/png' },
-                        { src: 'https://via.placeholder.com/128', sizes: '128x128', type: 'image/png' },
-                        { src: 'https://via.placeholder.com/192', sizes: '192x192', type: 'image/png' },
-                        { src: 'https://via.placeholder.com/256', sizes: '256x256', type: 'image/png' },
-                        { src: 'https://via.placeholder.com/384', sizes: '384x384', type: 'image/png' },
-                        { src: 'https://via.placeholder.com/512', sizes: '512x512', type: 'image/png' }
+                        { src: 'favicon.png', sizes: '1024x1024', type: 'image/png' }
                     ]
                 });
 
