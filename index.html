@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>meli18</title>
+    <meta name="description" content="Un cadeau unique pour Mélissa : musiques, vidéos et réflexions créées spécialement pour ses 18 ans. Une célébration de créativité, d'idées et de passion.">
+    <meta name="author" content="Romain">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Joyeux 18ème anniversaire Mélissa 🎉">
+    <meta property="og:description" content="Un cadeau unique : musiques, vidéos et réflexions pour célébrer tes 18 ans">
+    <meta property="og:image" content="favicon.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Joyeux 18ème anniversaire Mélissa 🎉">
+    <meta name="twitter:description" content="Un cadeau unique : musiques, vidéos et réflexions pour célébrer tes 18 ans">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/gift-cards.css">
+</head>
+<body>
+    <!-- Hero Section Personnalisée -->
+    <section class="hero hero-personal">
+        <div class="hero-content">
+            <h1 class="hero-title">Joyeux 18ème anniversaire</h1>
+            <h2 class="hero-name">Mélissa</h2>
+        </div>
+        <a href="#music" class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </a>
+    </section>
+
+    <!-- Section Unique: Ma passion + 2 Cartes -->
+    <section id="music" class="section music-section">
+        <div class="container">
+            <!-- Music Content -->
+            <div id="music-content" class="music-content">
+                <div class="intro-text">
+                    <!-- Musique 1 : Œuvre d'art -->
+                    <div class="music-player-container" style="margin-top: 2rem;">
+                        <div class="music-track" data-track="0" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
+                            <div class="track-info">
+                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
+                                <div class="track-details">
+                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Œuvre d'art</h3>
+                                </div>
+                            </div>
+                            <audio preload="auto" class="audio-player">
+                                <source src="audio/au-musee.mp3" type="audio/mpeg">
+                            </audio>
+                            <div class="custom-audio-controls">
+                                <button class="play-pause-btn">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <div class="audio-progress-container">
+                                    <div class="audio-progress-bar">
+                                        <div class="audio-progress-fill"></div>
+                                    </div>
+                                    <div class="audio-time">
+                                        <span class="current-time">0:00</span>
+                                        <span class="duration">0:00</span>
+                                    </div>
+                                </div>
+                                <div class="volume-control">
+                                    <button class="volume-btn">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                    <button class="repeat-btn">
+                                        <i class="fas fa-repeat"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Musique 2 : Nouvelles couleurs -->
+                    <div class="music-player-container" style="margin-top: 4rem;">
+                        <div class="music-track" data-track="1" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
+                            <div class="track-info">
+                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
+                                <div class="track-details">
+                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Nouvelles couleurs</h3>
+                                </div>
+                            </div>
+                            <audio preload="auto" class="audio-player">
+                                <source src="audio/nouvelles-couleurs.mp3" type="audio/mpeg">
+                            </audio>
+                            <div class="custom-audio-controls">
+                                <button class="play-pause-btn">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <div class="audio-progress-container">
+                                    <div class="audio-progress-bar">
+                                        <div class="audio-progress-fill"></div>
+                                    </div>
+                                    <div class="audio-time">
+                                        <span class="current-time">0:00</span>
+                                        <span class="duration">0:00</span>
+                                    </div>
+                                </div>
+                                <div class="volume-control">
+                                    <button class="volume-btn">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                    <button class="repeat-btn">
+                                        <i class="fas fa-repeat"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Musique 3 : Ma passion -->
+                    <div class="music-player-container" style="margin-top: 4rem;">
+                        <div class="music-track" data-track="2" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
+                            <div class="track-info">
+                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
+                                <div class="track-details">
+                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Ma passion</h3>
+                                </div>
+                            </div>
+                            <audio preload="auto" class="audio-player" id="ma-passion-audio">
+                                <source src="audio/ma-passion-v1.mp3" type="audio/mpeg" id="ma-passion-source">
+                            </audio>
+                            <div class="custom-audio-controls">
+                                <button class="play-pause-btn">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <div class="audio-progress-container">
+                                    <div class="audio-progress-bar">
+                                        <div class="audio-progress-fill"></div>
+                                    </div>
+                                    <div class="audio-time">
+                                        <span class="current-time">0:00</span>
+                                        <span class="duration">0:00</span>
+                                    </div>
+                                </div>
+                                <div class="volume-control">
+                                    <button class="volume-btn">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                    <button class="repeat-btn">
+                                        <i class="fas fa-repeat"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Musique 4 : Big Bang -->
+                    <div class="music-player-container" style="margin-top: 4rem;">
+                        <div class="music-track" data-track="3" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
+                            <div class="track-info">
+                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
+                                <div class="track-details">
+                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Big Bang</h3>
+                                </div>
+                            </div>
+                            <audio preload="auto" class="audio-player">
+                                <source src="audio/big-bang.mp3" type="audio/mpeg">
+                            </audio>
+                            <div class="custom-audio-controls">
+                                <button class="play-pause-btn">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <div class="audio-progress-container">
+                                    <div class="audio-progress-bar">
+                                        <div class="audio-progress-fill"></div>
+                                    </div>
+                                    <div class="audio-time">
+                                        <span class="current-time">0:00</span>
+                                        <span class="duration">0:00</span>
+                                    </div>
+                                </div>
+                                <div class="volume-control">
+                                    <button class="volume-btn">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                    <button class="repeat-btn">
+                                        <i class="fas fa-repeat"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bouton Vidéographie centré -->
+                    <div style="display: flex; justify-content: center; max-width: 1200px; margin: 4rem auto 0;">
+                        <a href="https://wpftznyy.gensparkspace.com/" target="_blank" class="premium-btn" style="white-space: nowrap;">
+                            <span class="premium-btn-text" style="display: block; white-space: nowrap;">Vidéographie</span>
+                            <span class="premium-btn-shine"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+
+
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+/* ========================================
+   GIFT CARDS - Page Romain
+   Cartes pour Melissia, Vidéographie, Musiques
+   ======================================== */
+
+.gift-card-personal {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.03) 0%, 
+        rgba(255, 255, 255, 0.01) 100%
+    );
+    backdrop-filter: blur(30px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 32px;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    /* Supprimer carrés bleus */
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+    -webkit-touch-callout: none !important;
+}
+
+.gift-card-personal:focus,
+.gift-card-personal:active {
+    outline: none !important;
+}
+
+/* Shine effect */
+.gift-card-personal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 215, 0, 0.15), 
+        transparent
+    );
+    transition: left 0.6s ease;
+}
+
+.gift-card-personal:hover::before {
+    left: 100%;
+}
+
+/* Glow border */
+.gift-card-personal::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, 
+        var(--gold) 0%, 
+        var(--pink) 50%, 
+        var(--purple) 100%
+    );
+    border-radius: 32px;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.5s ease;
+    filter: blur(15px);
+}
+
+.gift-card-personal:hover::after {
+    opacity: 0.5;
+}
+
+.gift-card-personal:hover {
+    transform: translateY(-12px) scale(1.03);
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 
+        0 24px 60px rgba(255, 215, 0, 0.3),
+        0 0 80px rgba(255, 215, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.gift-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.4s ease;
+    filter: drop-shadow(0 8px 20px rgba(255, 215, 0, 0.3));
+}
+
+.gift-card-personal:hover .gift-icon {
+    transform: scale(1.2) rotate(10deg);
+    filter: drop-shadow(0 12px 30px rgba(255, 215, 0, 0.6));
+}
+
+.gift-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--light);
+    font-weight: 700;
+    transition: all 0.4s ease;
+}
+
+.gift-card-personal:hover .gift-title {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transform: scale(1.05);
+}
+
+.gift-description {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+}
+
+.gift-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: var(--darker);
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.gift-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.gift-btn:hover::before {
+    left: 100%;
+}
+
+.gift-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 36px rgba(255, 215, 0, 0.6);
+}
+
+.gift-btn i {
+    transition: transform 0.3s ease;
+}
+
+.gift-btn:hover i {
+    transform: translateX(5px);
+}
+
+/* Animation d'entrée */
+.gift-card-personal {
+    animation: fadeInUp 0.8s ease backwards;
+}
+
+.gift-card-personal:nth-child(1) { animation-delay: 0.1s; }
+.gift-card-personal:nth-child(2) { animation-delay: 0.2s; }
+.gift-card-personal:nth-child(3) { animation-delay: 0.3s; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    /* Section padding sur mobile */
+    .gifts-cards-section {
+        padding: 4rem 1rem !important;
+    }
+    
+    /* Forcer la grille sur 1 colonne sur mobile */
+    .gifts-cards-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+        padding: 0 !important;
+    }
+    
+    .gift-card-personal {
+        padding: 2rem 1.5rem;
+        border-radius: 20px;
+    }
+    
+    .gift-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .gift-title {
+        font-size: 1.4rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .gift-description {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+    
+    .gift-btn {
+        padding: 0.85rem 1.75rem;
+        font-size: 0.95rem;
+    }
+    
+    /* Désactiver les effets hover sur mobile */
+    .gift-card-personal:hover {
+        transform: none;
+    }
+    
+    .gift-card-personal:hover .gift-icon {
+        transform: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .gift-card-personal {
+        padding: 1.75rem 1.25rem;
+    }
+    
+    .gift-icon {
+        font-size: 2rem;
+    }
+    
+    .gift-title {
+        font-size: 1.3rem;
+    }
+    
+    .gift-description {
+        font-size: 0.85rem;
+    }
+}
