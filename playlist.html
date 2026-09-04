@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ta Playlist - meli18</title>
+    <meta name="description" content="La playlist de Mélissa : toutes les musiques créées pour ses 18 ans, en lecture enchaînée.">
+    <meta name="author" content="Romain">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Retour -->
+    <div class="back-nav">
+        <a href="index.html" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Retour
+        </a>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero hero-personal" style="min-height: 50vh;">
+        <div class="hero-content">
+            <h1 class="hero-title">Ta Playlist</h1>
+        </div>
+    </section>
+
+    <!-- Playlist -->
+    <section class="section music-section">
+        <div class="container">
+            <div class="music-content">
+                <div class="music-player-container">
+                    <div class="music-track" data-track="0" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold); margin-bottom: 2rem;">
+                        <div class="track-info">
+                            <span class="track-number" style="background: var(--accent-gold); color: #000;">1</span>
+                            <div class="track-details">
+                                <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Œuvre d'art</h3>
+                            </div>
+                        </div>
+                        <audio preload="auto" class="audio-player">
+                            <source src="audio/au-musee.mp3" type="audio/mpeg">
+                        </audio>
+                    </div>
+                    <div class="music-track" data-track="1" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold); margin-bottom: 2rem;">
+                        <div class="track-info">
+                            <span class="track-number" style="background: var(--accent-gold); color: #000;">2</span>
+                            <div class="track-details">
+                                <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Nouvelles couleurs</h3>
+                            </div>
+                        </div>
+                        <audio preload="auto" class="audio-player">
+                            <source src="audio/nouvelles-couleurs.mp3" type="audio/mpeg">
+                        </audio>
+                    </div>
+                    <div class="music-track" data-track="2" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold); margin-bottom: 2rem;">
+                        <div class="track-info">
+                            <span class="track-number" style="background: var(--accent-gold); color: #000;">3</span>
+                            <div class="track-details">
+                                <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Ma passion</h3>
+                            </div>
+                        </div>
+                        <audio preload="auto" class="audio-player">
+                            <source src="audio/ma-passion-v1.mp3" type="audio/mpeg">
+                        </audio>
+                    </div>
+                    <div class="music-track" data-track="3" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
+                        <div class="track-info">
+                            <span class="track-number" style="background: var(--accent-gold); color: #000;">4</span>
+                            <div class="track-details">
+                                <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Big Bang</h3>
+                            </div>
+                        </div>
+                        <audio preload="auto" class="audio-player">
+                            <source src="audio/big-bang.mp3" type="audio/mpeg">
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
