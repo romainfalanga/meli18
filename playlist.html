@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playlist - Mélissa 18 ans</title>
-    <meta name="description" content="Ta playlist personnalisée : 7 musiques originales à découvrir. Crée ton ordre, like tes préférées et profite de la musique.">
+    <meta name="description" content="Ta playlist personnalisée : 6 musiques originales à découvrir. Like tes préférées et profite de la musique.">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png">
@@ -279,49 +279,6 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Mode édition */
-        .edit-mode .playlist-track {
-            cursor: move;
-            cursor: grab;
-        }
-
-        .edit-mode .playlist-track:active {
-            cursor: grabbing;
-        }
-
-        .edit-mode .playlist-track.dragging {
-            opacity: 0.5;
-            transform: scale(0.95);
-        }
-
-        .edit-mode .playlist-track.drag-over {
-            border-top: 3px solid var(--gold);
-        }
-
-        .drag-handle {
-            display: none;
-            width: 30px;
-            height: 30px;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 1.2rem;
-            cursor: grab;
-            flex-shrink: 0;
-        }
-
-        .edit-mode .drag-handle {
-            display: flex;
-        }
-
-        .edit-mode .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        #editOrderBtn.active {
-            background: linear-gradient(135deg, #5f27cd, #8854d0) !important;
-        }
-
         /* Mobile */
         @media (max-width: 768px) {
             .playlist-header h2 {
@@ -355,12 +312,6 @@
                 width: 40px;
                 height: 40px;
                 font-size: 1.1rem;
-            }
-
-            .drag-handle {
-                width: 25px;
-                height: 25px;
-                font-size: 1rem;
             }
         }
     </style>
@@ -399,6 +350,9 @@
                 </div>
 
                 <div class="main-player-controls">
+                    <button id="shuffleBtn" title="Aléatoire">
+                        <i class="fas fa-random"></i>
+                    </button>
                     <button id="prevBtn" title="Précédent">
                         <i class="fas fa-step-backward"></i>
                     </button>
@@ -408,14 +362,8 @@
                     <button id="nextBtn" title="Suivant">
                         <i class="fas fa-step-forward"></i>
                     </button>
-                    <button id="shuffleBtn" title="Aléatoire">
-                        <i class="fas fa-random"></i>
-                    </button>
                     <button id="repeatBtn" title="Répéter">
                         <i class="fas fa-repeat"></i>
-                    </button>
-                    <button id="editOrderBtn" title="Modifier l'ordre">
-                        <i class="fas fa-sort"></i>
                     </button>
                 </div>
             </div>
@@ -436,7 +384,6 @@
 
         // Liste complète des musiques
         const tracks = [
-            { id: 1, title: "Réveille-toi", file: "audio/reveille-toi.mp3" },
             { id: 6, title: "Le passager", file: "audio/le-passager.mp3" },
             { id: 7, title: "Œuvre d'art", file: "audio/au-musee.mp3" },
             { id: 8, title: "Nouvelles couleurs", file: "audio/nouvelles-couleurs.mp3" },
@@ -445,30 +392,18 @@
             { id: 11, title: "Nuage", file: "audio/nuage.mp3" }
         ];
 
-        // Ordre par défaut : Réveille-toi, Le passager, puis le reste
-        const defaultOrder = [1, 6, 7, 8, 9, 10, 11];
+        // Ordre de la playlist : Le passager en dernier
+        const defaultOrder = [7, 8, 9, 10, 11, 6];
 
         // État de l'application
         let currentTrackIndex = 0;
         let isPlaying = false;
         let isShuffled = false;
         let repeatMode = 'off'; // 'off', 'all', 'one'
-        let isEditMode = false;
-        
+
         // Initialiser likedTracks : si localStorage existe, on vérifie que tous les IDs y sont
         let likedTracks = JSON.parse(localStorage.getItem('likedTracks')) || [];
         const allTrackIds = tracks.map(t => t.id);
-        
-        // Initialiser l'ordre personnalisé des musiques (utilise l'ordre par défaut si pas de localStorage)
-        let customOrder = JSON.parse(localStorage.getItem('customTrackOrder')) || defaultOrder;
-
-        // Retirer les musiques supprimées et ajouter les nouvelles à la fin de l'ordre sauvegardé
-        customOrder = customOrder.filter(id => tracks.some(t => t.id === id));
-        tracks.forEach(t => {
-            if (!customOrder.includes(t.id)) {
-                customOrder.push(t.id);
-            }
-        });
         
         // Si likedTracks est vide ou ne contient pas tous les IDs, on ajoute les manquants
         if (likedTracks.length === 0) {
@@ -490,7 +425,6 @@
         const nextBtn = document.getElementById('nextBtn');
         const shuffleBtn = document.getElementById('shuffleBtn');
         const repeatBtn = document.getElementById('repeatBtn');
-        const editOrderBtn = document.getElementById('editOrderBtn');
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
         const currentTime = document.getElementById('currentTime');
@@ -499,9 +433,9 @@
         const currentTrackStatus = document.getElementById('currentTrackStatus');
         const playlistTracks = document.getElementById('playlistTracks');
 
-        // Obtenir les musiques dans l'ordre personnalisé
+        // Obtenir les musiques dans l'ordre de la playlist
         function getOrderedTracks() {
-            return customOrder.map(id => tracks.find(t => t.id === id)).filter(Boolean);
+            return defaultOrder.map(id => tracks.find(t => t.id === id)).filter(Boolean);
         }
 
         // Initialiser la playlist
@@ -515,12 +449,8 @@
                 trackEl.className = `playlist-track ${!isLiked ? 'unliked' : ''}`;
                 trackEl.dataset.index = index;
                 trackEl.dataset.trackId = track.id;
-                trackEl.draggable = isEditMode;
-                
+
                 trackEl.innerHTML = `
-                    <div class="drag-handle">
-                        <i class="fas fa-grip-vertical"></i>
-                    </div>
                     <div class="track-number">${index + 1}</div>
                     <div class="track-info-wrapper">
                         <div class="track-title-playlist">${track.title}</div>
@@ -532,7 +462,7 @@
                 
                 // Click sur la musique pour la jouer
                 trackEl.addEventListener('click', (e) => {
-                    if (!e.target.closest('.like-btn') && !isEditMode) {
+                    if (!e.target.closest('.like-btn')) {
                         if (isLiked) {
                             currentTrackIndex = index;
                             loadTrack();
@@ -547,14 +477,6 @@
                     e.stopPropagation();
                     toggleLike(track.id);
                 });
-
-                // Drag & Drop en mode édition
-                if (isEditMode) {
-                    trackEl.addEventListener('dragstart', handleDragStart);
-                    trackEl.addEventListener('dragover', handleDragOver);
-                    trackEl.addEventListener('drop', handleDrop);
-                    trackEl.addEventListener('dragend', handleDragEnd);
-                }
 
                 playlistTracks.appendChild(trackEl);
             });
@@ -571,62 +493,6 @@
             localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
             initPlaylist();
             updateActiveTrack();
-        }
-
-        // Drag & Drop
-        let draggedElement = null;
-
-        function handleDragStart(e) {
-            draggedElement = this;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            
-            if (this !== draggedElement) {
-                this.classList.add('drag-over');
-            }
-            return false;
-        }
-
-        function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-
-            if (draggedElement !== this) {
-                const allItems = Array.from(playlistTracks.querySelectorAll('.playlist-track'));
-                const draggedIndex = allItems.indexOf(draggedElement);
-                const targetIndex = allItems.indexOf(this);
-
-                // Réorganiser customOrder
-                const draggedId = parseInt(draggedElement.dataset.trackId);
-                customOrder.splice(draggedIndex, 1);
-                customOrder.splice(targetIndex, 0, draggedId);
-
-                // Sauvegarder
-                localStorage.setItem('customTrackOrder', JSON.stringify(customOrder));
-
-                // Réafficher
-                initPlaylist();
-                updateActiveTrack();
-            }
-
-            this.classList.remove('drag-over');
-            return false;
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            document.querySelectorAll('.playlist-track').forEach(item => {
-                item.classList.remove('drag-over');
-            });
         }
 
         // Charger une musique
@@ -862,27 +728,6 @@
         progressBar.addEventListener('touchstart', startDrag, { passive: false });
         document.addEventListener('touchmove', onDrag, { passive: false });
         document.addEventListener('touchend', endDrag, { passive: false });
-
-        // Bouton Modifier l'ordre
-        editOrderBtn.addEventListener('click', () => {
-            isEditMode = !isEditMode;
-            
-            if (isEditMode) {
-                editOrderBtn.classList.add('active');
-                playlistTracks.classList.add('edit-mode');
-                // Arrêter la musique en mode édition
-                if (!audio.paused) {
-                    pause();
-                }
-            } else {
-                editOrderBtn.classList.remove('active');
-                playlistTracks.classList.remove('edit-mode');
-            }
-            
-            // Réafficher la playlist
-            initPlaylist();
-            updateActiveTrack();
-        });
 
         // Initialiser
         initPlaylist();
