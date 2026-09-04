@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playlist - Mélissa 18 ans</title>
-    <meta name="description" content="Ta playlist personnalisée : 10 musiques originales à découvrir. Crée ton ordre, like tes préférées et profite de la musique.">
+    <meta name="description" content="Ta playlist personnalisée : 7 musiques originales à découvrir. Crée ton ordre, like tes préférées et profite de la musique.">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png">
@@ -437,19 +437,16 @@
         // Liste complète des musiques
         const tracks = [
             { id: 1, title: "Réveille-toi", file: "audio/reveille-toi.mp3" },
-            { id: 2, title: "Mes galaxies dansent", file: "audio/mes-galaxies-dansent.mp3" },
-            { id: 3, title: "Un fil entre 2 infinis", file: "audio/un-fil-entre-2-infinis.mp3" },
-            { id: 4, title: "Je pense donc je suis infini", file: "audio/je-pense-donc-je-suis-infini.mp3" },
-            { id: 5, title: "La fiole de Falanga", file: "audio/la-fiole-de-falanga.mp3" },
             { id: 6, title: "Le passager", file: "audio/le-passager.mp3" },
             { id: 7, title: "Œuvre d'art", file: "audio/au-musee.mp3" },
             { id: 8, title: "Nouvelles couleurs", file: "audio/nouvelles-couleurs.mp3" },
             { id: 9, title: "Ma passion", file: "audio/ma-passion-v1.mp3" },
-            { id: 10, title: "Big Bang", file: "audio/big-bang.mp3" }
+            { id: 10, title: "Big Bang", file: "audio/big-bang.mp3" },
+            { id: 11, title: "Nuage", file: "audio/nuage.mp3" }
         ];
-        
-        // Ordre par défaut : Réveille-toi, Le passager, La fiole de Falanga, puis le reste
-        const defaultOrder = [1, 6, 5, 2, 3, 4, 7, 8, 9, 10];
+
+        // Ordre par défaut : Réveille-toi, Le passager, puis le reste
+        const defaultOrder = [1, 6, 7, 8, 9, 10, 11];
 
         // État de l'application
         let currentTrackIndex = 0;
@@ -464,6 +461,14 @@
         
         // Initialiser l'ordre personnalisé des musiques (utilise l'ordre par défaut si pas de localStorage)
         let customOrder = JSON.parse(localStorage.getItem('customTrackOrder')) || defaultOrder;
+
+        // Retirer les musiques supprimées et ajouter les nouvelles à la fin de l'ordre sauvegardé
+        customOrder = customOrder.filter(id => tracks.some(t => t.id === id));
+        tracks.forEach(t => {
+            if (!customOrder.includes(t.id)) {
+                customOrder.push(t.id);
+            }
+        });
         
         // Si likedTracks est vide ou ne contient pas tous les IDs, on ajoute les manquants
         if (likedTracks.length === 0) {
