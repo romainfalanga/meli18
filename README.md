@@ -16,7 +16,7 @@ Site statique (HTML / CSS / JavaScript) déployé sur Netlify : [meli18.fr](http
 ## Déploiement
 
 Netlify exécute `sh build.sh` et publie `dist/`. Le script reconstitue le fichier
-continu `audio/playlist-v3.mp3` depuis les segments binaires `playlist-parts/part-*`
+continu `audio/playlist-v4.mp3` depuis les segments binaires `playlist-parts/part-*`
 et vérifie son SHA-256. Ces segments servent uniquement au stockage du fichier
 dans le dépôt : le navigateur reçoit toujours un seul MP3 complet, jamais des
 morceaux séparés, afin de conserver la lecture téléphone verrouillé.
@@ -25,3 +25,8 @@ La playlist comporte six titres, avec Gris en dernière position (début à
 573,8515625 s, durée 156,52620833333333 s). Les commandes Media Session et le
 lecteur permanent sont conservés. Pour remplacer le fichier continu, utiliser
 un nouveau nom afin de respecter le cache immutable des fichiers audio.
+
+Volume de Gris ajusté seul : -12,89 LUFS intégrés et -0,63 dBTP après encodage,
+contre -14,81 LUFS avant correction. Les cinq autres titres sont conservés
+sans changement, avec vérification de leur audio décodé identique échantillon
+par échantillon. Durées, positions et lecteur continu inchangés.
