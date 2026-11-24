@@ -6,7 +6,7 @@ Site statique (HTML / CSS / JavaScript) déployé sur Netlify : [meli18.fr](http
 
 ## Structure
 
-- `index.html` — page d'accueil (lecteurs audio personnalisés, lien Vidéographie)
+- `index.html` — page unique de la playlist, accessible à la racine du site
 - `css/style.css` — styles principaux
 - `css/gift-cards.css` — styles des cartes cadeaux
 - `js/main.js` — lecteurs audio, défilement fluide, déverrouillage par mot de passe

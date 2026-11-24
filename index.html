@@ -3,212 +3,790 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>meli18</title>
-    <meta name="description" content="Un cadeau unique pour Mélissa : musiques, vidéos et réflexions créées spécialement pour ses 18 ans. Une célébration de créativité, d'idées et de passion.">
-    <meta name="author" content="Romain">
+    <title>Playlist - Mélissa 18 ans</title>
+    <meta name="description" content="Ta playlist personnalisée : 6 musiques originales à découvrir. Like tes préférées et profite de la musique.">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="favicon.png">
     
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Joyeux 18ème anniversaire Mélissa 🎉">
-    <meta property="og:description" content="Un cadeau unique : musiques, vidéos et réflexions pour célébrer tes 18 ans">
-    <meta property="og:image" content="favicon.png">
+    <meta property="og:title" content="Playlist pour Mélissa">
+    <meta property="og:description" content="Une playlist personnalisée de musiques originales">
     
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Joyeux 18ème anniversaire Mélissa 🎉">
-    <meta name="twitter:description" content="Un cadeau unique : musiques, vidéos et réflexions pour célébrer tes 18 ans">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/gift-cards.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .playlist-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Lecteur audio principal */
+        .main-player {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .main-player-info {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .current-track-title {
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .current-track-status {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Deux rangées : précédent / lecture / suivant puis aléatoire / répéter */
+        .main-player-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        /* Badge "1" affiché en mode répétition d'une seule musique */
+        #repeatBtn {
+            position: relative;
+        }
+
+        .repeat-one-badge {
+            display: none;
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #000;
+            color: var(--gold);
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 20px;
+            text-align: center;
+            border: 2px solid var(--gold);
+        }
+
+        #repeatBtn.repeat-one .repeat-one-badge {
+            display: block;
+        }
+
+        .main-player-controls button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--gold), #d4a574);
+            color: #000;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .main-player-controls button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .main-player-controls .play-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .progress-container {
+            width: 100%;
+            margin: 1.5rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: visible;
+            transition: height 0.2s ease;
+        }
+
+        .progress-bar:hover {
+            height: 8px;
+        }
+
+        .progress-bar.dragging {
+            height: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), #d4a574);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.1s linear;
+            position: relative;
+            pointer-events: none;
+        }
+
+        .progress-fill.dragging {
+            transition: none;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background: var(--gold);
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+            cursor: grab;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .progress-fill::after:hover {
+            transform: translateY(-50%) scale(1.2);
+            box-shadow: 0 0 16px rgba(255, 215, 0, 1);
+        }
+
+        .progress-fill.dragging::after {
+            cursor: grabbing;
+            transform: translateY(-50%) scale(1.3);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.5rem;
+        }
+
+        /* Liste des musiques */
+        .playlist-tracks {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .playlist-track {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* Survol uniquement sur les appareils avec souris : sur tactile, le
+           navigateur garde le style :hover collé sur le dernier bloc touché,
+           ce qui donne l'impression de deux musiques actives à la fois */
+        @media (hover: hover) and (pointer: fine) {
+            .playlist-track:hover {
+                background: rgba(255, 215, 0, 0.1);
+                border-color: var(--gold);
+                transform: translateX(5px);
+            }
+        }
+
+        .playlist-track.active {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+            border: 2px solid var(--gold);
+        }
+
+        .playlist-track.unliked {
+            opacity: 0.4;
+        }
+
+        .track-symbol {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            background: #c82e36;
+            border-radius: 50%;
+        }
+
+        .track-symbol::before {
+            content: "";
+            width: 60%;
+            height: 16%;
+            background: white;
+        }
+
+        .track-symbol.checked {
+            background: #208544;
+            border-radius: 20%;
+        }
+
+        .track-symbol.checked::before {
+            width: 25%;
+            height: 47%;
+            background: transparent;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            transform: translateY(-7%) rotate(45deg);
+        }
+
+        .playlist-track.active .track-symbol {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .track-info-wrapper {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-title-playlist {
+            font-size: 1.1rem;
+            color: var(--gold);
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-duration {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .like-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ff4757;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .like-btn:hover {
+            transform: scale(1.15);
+            border-color: #ff4757;
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .like-btn.liked {
+            color: #ff4757;
+            background: rgba(255, 71, 87, 0.2);
+            border-color: #ff4757;
+        }
+
+        .like-btn.unliked {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .main-player {
+                padding: 1.5rem;
+            }
+
+            .current-track-title {
+                font-size: 1.2rem;
+            }
+
+            .playlist-track {
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .track-symbol {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+
+            .track-title-playlist {
+                font-size: 1rem;
+            }
+
+            .like-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Hero Section Personnalisée -->
-    <section class="hero hero-personal">
-        <div class="hero-content">
-            <h1 class="hero-title">Joyeux 18ème anniversaire</h1>
-            <h2 class="hero-name">Mélissa</h2>
-        </div>
-        <a href="#music" class="scroll-indicator">
-            <i class="fas fa-chevron-down"></i>
-        </a>
-    </section>
+    <!-- Section Playlist -->
+    <section class="section" style="min-height: 100vh; padding-top: 1rem; background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%);">
+        <div class="playlist-container">
+            <!-- Lecteur audio principal -->
+            <div class="main-player">
+                <div class="main-player-info">
+                    <h3 class="current-track-title" id="currentTrackTitle">Sélectionne une musique</h3>
+                </div>
 
-    <!-- Section Unique: Ma passion + 2 Cartes -->
-    <section id="music" class="section music-section">
-        <div class="container">
-            <!-- Music Content -->
-            <div id="music-content" class="music-content">
-                <div class="intro-text">
-                    <!-- Musique 1 : Œuvre d'art -->
-                    <div class="music-player-container" style="margin-top: 2rem;">
-                        <div class="music-track" data-track="0" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
-                            <div class="track-info">
-                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
-                                <div class="track-details">
-                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Œuvre d'art</h3>
-                                </div>
-                            </div>
-                            <audio preload="auto" class="audio-player">
-                                <source src="audio/au-musee.mp3" type="audio/mpeg">
-                            </audio>
-                            <div class="custom-audio-controls">
-                                <button class="play-pause-btn">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <div class="audio-progress-container">
-                                    <div class="audio-progress-bar">
-                                        <div class="audio-progress-fill"></div>
-                                    </div>
-                                    <div class="audio-time">
-                                        <span class="current-time">0:00</span>
-                                        <span class="duration">0:00</span>
-                                    </div>
-                                </div>
-                                <div class="volume-control">
-                                    <button class="volume-btn">
-                                        <i class="fas fa-volume-up"></i>
-                                    </button>
-                                    <button class="repeat-btn">
-                                        <i class="fas fa-repeat"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-fill" id="progressFill"></div>
                     </div>
-                    
-                    <!-- Musique 2 : Nouvelles couleurs -->
-                    <div class="music-player-container" style="margin-top: 4rem;">
-                        <div class="music-track" data-track="1" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
-                            <div class="track-info">
-                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
-                                <div class="track-details">
-                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Nouvelles couleurs</h3>
-                                </div>
-                            </div>
-                            <audio preload="auto" class="audio-player">
-                                <source src="audio/nouvelles-couleurs.mp3" type="audio/mpeg">
-                            </audio>
-                            <div class="custom-audio-controls">
-                                <button class="play-pause-btn">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <div class="audio-progress-container">
-                                    <div class="audio-progress-bar">
-                                        <div class="audio-progress-fill"></div>
-                                    </div>
-                                    <div class="audio-time">
-                                        <span class="current-time">0:00</span>
-                                        <span class="duration">0:00</span>
-                                    </div>
-                                </div>
-                                <div class="volume-control">
-                                    <button class="volume-btn">
-                                        <i class="fas fa-volume-up"></i>
-                                    </button>
-                                    <button class="repeat-btn">
-                                        <i class="fas fa-repeat"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Musique 3 : Ma passion -->
-                    <div class="music-player-container" style="margin-top: 4rem;">
-                        <div class="music-track" data-track="2" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
-                            <div class="track-info">
-                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
-                                <div class="track-details">
-                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Ma passion</h3>
-                                </div>
-                            </div>
-                            <audio preload="auto" class="audio-player" id="ma-passion-audio">
-                                <source src="audio/ma-passion-v1.mp3" type="audio/mpeg" id="ma-passion-source">
-                            </audio>
-                            <div class="custom-audio-controls">
-                                <button class="play-pause-btn">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <div class="audio-progress-container">
-                                    <div class="audio-progress-bar">
-                                        <div class="audio-progress-fill"></div>
-                                    </div>
-                                    <div class="audio-time">
-                                        <span class="current-time">0:00</span>
-                                        <span class="duration">0:00</span>
-                                    </div>
-                                </div>
-                                <div class="volume-control">
-                                    <button class="volume-btn">
-                                        <i class="fas fa-volume-up"></i>
-                                    </button>
-                                    <button class="repeat-btn">
-                                        <i class="fas fa-repeat"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Musique 4 : Big Bang -->
-                    <div class="music-player-container" style="margin-top: 4rem;">
-                        <div class="music-track" data-track="3" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%); border: 2px solid var(--accent-gold);">
-                            <div class="track-info">
-                                <span class="track-number" style="background: var(--accent-gold); color: #000;">♪</span>
-                                <div class="track-details">
-                                    <h3 class="track-title" style="color: var(--accent-gold); font-size: 1.3rem;">Big Bang</h3>
-                                </div>
-                            </div>
-                            <audio preload="auto" class="audio-player">
-                                <source src="audio/big-bang.mp3" type="audio/mpeg">
-                            </audio>
-                            <div class="custom-audio-controls">
-                                <button class="play-pause-btn">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <div class="audio-progress-container">
-                                    <div class="audio-progress-bar">
-                                        <div class="audio-progress-fill"></div>
-                                    </div>
-                                    <div class="audio-time">
-                                        <span class="current-time">0:00</span>
-                                        <span class="duration">0:00</span>
-                                    </div>
-                                </div>
-                                <div class="volume-control">
-                                    <button class="volume-btn">
-                                        <i class="fas fa-volume-up"></i>
-                                    </button>
-                                    <button class="repeat-btn">
-                                        <i class="fas fa-repeat"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Bouton Ta Playlist centré -->
-                    <div style="display: flex; justify-content: center; max-width: 1200px; margin: 4rem auto 0;">
-                        <a href="playlist.html" class="premium-btn" style="white-space: nowrap;">
-                            <span class="premium-btn-text" style="display: block; white-space: nowrap;">Ta Playlist</span>
-                            <span class="premium-btn-shine"></span>
-                        </a>
+                    <div class="time-display">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
                     </div>
                 </div>
+
+                <div class="main-player-controls">
+                    <div class="controls-row controls-transport">
+                        <button id="prevBtn" title="Précédent">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button class="play-btn" id="playBtn" title="Lecture / Pause">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button id="nextBtn" title="Suivant">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                    </div>
+                    <div class="controls-row controls-modes">
+                        <button id="repeatBtn" title="Répéter">
+                            <i class="fas fa-repeat"></i>
+                            <span class="repeat-one-badge">1</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des musiques -->
+            <div class="playlist-tracks" id="playlistTracks">
+                <!-- Les musiques seront injectées ici par JavaScript -->
             </div>
         </div>
     </section>
 
+    <!-- Audio element caché -->
+    <audio id="mainAudio" src="audio/playlist-v6.mp3" preload="auto"></audio>
 
+    <script>
+        console.log('%c🎉 Joyeux Anniversaire Mélissa ! 🎂', 'font-size: 24px; color: #d4a574; font-weight: bold;');
+        console.log('%cCe site a été créé avec amour par Romain ❤️', 'font-size: 14px; color: #667eea;');
 
+        // Les 6 musiques sont réunies dans UN SEUL fichier audio, dans cet ordre.
+        // Changer de musique consiste donc à se déplacer dans ce fichier, jamais
+        // à changer la source du lecteur : la lecture n'est ainsi jamais
+        // interrompue, et le lecteur du système (écran de verrouillage, barre de
+        // notifications) reste affiché tant que l'utilisateur n'a pas mis pause.
+        const tracks = [
+            { id: 7,  title: "Œuvre d'art",         start: 0,       duration: 103.993 },
+            { id: 8,  title: "Nouvelles couleurs",  start: 103.993, duration: 98.353 },
+            { id: 9,  title: "Ma passion",          start: 202.346, duration: 104.320 },
+            { id: 10, title: "Big Bang",            start: 306.666, duration: 114.920 },
+            { id: 11, title: "Nuage",               start: 421.586, duration: 152.2789791666667 },
+            { id: 12, title: "Gris",                start: 573.8649791666667, duration: 155.96 }
+        ];
 
+        // Marge prise avant la fin d'une musique pour enchaîner sans laisser
+        // entendre le début de la suivante dans le fichier
+        const LEAD = 0.35;
 
-    <script src="js/main.js"></script>
+        // État de l'application
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let hasStarted = false;
+        let repeatMode = 'all'; // 'all' (toute la playlist) ou 'one' (musique en cours)
+
+        // Musiques likées (toutes par défaut)
+        const allTrackIds = tracks.map(t => t.id);
+        let likedTracks = JSON.parse(localStorage.getItem('likedTracks')) || [];
+        likedTracks = likedTracks.filter(id => allTrackIds.includes(id));
+        if (likedTracks.length === 0) {
+            likedTracks = allTrackIds.slice();
+        }
+        if (!localStorage.getItem('playlistGrisAdded')) {
+            if (!likedTracks.includes(12)) likedTracks.push(12);
+            localStorage.setItem('playlistGrisAdded', 'true');
+        }
+        localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
+
+        // Éléments DOM
+        const audio = document.getElementById('mainAudio');
+        const playBtn = document.getElementById('playBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const currentTimeEl = document.getElementById('currentTime');
+        const totalTimeEl = document.getElementById('totalTime');
+        const currentTrackTitle = document.getElementById('currentTrackTitle');
+        const playlistTracks = document.getElementById('playlistTracks');
+
+        function trackEnd(i) {
+            return tracks[i].start + tracks[i].duration;
+        }
+
+        function isLiked(i) {
+            return likedTracks.includes(tracks[i].id);
+        }
+
+        // Musique likée suivante (direction 1) ou précédente (-1), en sautant
+        // les musiques non likées
+        function getAdjacentIndex(direction) {
+            const total = tracks.length;
+            for (let step = 1; step <= total; step++) {
+                const i = (currentTrackIndex + direction * step + total * step) % total;
+                if (isLiked(i)) return i;
+            }
+            return -1;
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) seconds = 0;
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Se déplacer dans le fichier, même si les métadonnées ne sont pas
+        // encore chargées au moment du clic
+        let pendingSeek = null;
+        function seekTo(time) {
+            if (audio.readyState > 0) {
+                audio.currentTime = time;
+            } else {
+                pendingSeek = time;
+            }
+        }
+
+        audio.addEventListener('loadedmetadata', () => {
+            if (pendingSeek !== null) {
+                audio.currentTime = pendingSeek;
+                pendingSeek = null;
+            }
+        });
+
+        // Construction de la liste
+        function initPlaylist() {
+            playlistTracks.innerHTML = '';
+            tracks.forEach((track, index) => {
+                const liked = isLiked(index);
+                const el = document.createElement('div');
+                el.className = 'playlist-track' + (liked ? '' : ' unliked');
+                el.dataset.index = index;
+                el.innerHTML = `
+                    <span class="track-symbol${track.id === 12 ? ' checked' : ''}" role="img" aria-label="${track.id === 12 ? 'Validé' : 'Sens interdit'}"></span>
+                    <div class="track-info-wrapper">
+                        <div class="track-title-playlist">${track.title}</div>
+                    </div>
+                    <button class="like-btn ${liked ? 'liked' : 'unliked'}" data-id="${track.id}">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                `;
+
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('.like-btn')) return;
+                    if (isLiked(index)) selectTrack(index);
+                });
+
+                el.querySelector('.like-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleLike(track.id);
+                });
+
+                playlistTracks.appendChild(el);
+            });
+            updateActiveTrack();
+        }
+
+        function toggleLike(trackId) {
+            const pos = likedTracks.indexOf(trackId);
+            if (pos > -1) {
+                likedTracks.splice(pos, 1);
+            } else {
+                likedTracks.push(trackId);
+            }
+            localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
+            initPlaylist();
+        }
+
+        function updateActiveTrack() {
+            document.querySelectorAll('.playlist-track').forEach((el, index) => {
+                el.classList.toggle('active', hasStarted && index === currentTrackIndex);
+            });
+        }
+
+        function updateTrackUI() {
+            const track = tracks[currentTrackIndex];
+            currentTrackTitle.textContent = hasStarted ? track.title : 'Sélectionne une musique';
+            totalTimeEl.textContent = formatTime(track.duration);
+            updateActiveTrack();
+            updateMediaSession();
+        }
+
+        // Lecture / pause : le lecteur n'est jamais rechargé, seulement mis en
+        // pause par l'utilisateur
+        function play() {
+            hasStarted = true;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {});
+            }
+            isPlaying = true;
+            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+        }
+
+        function pause() {
+            audio.pause();
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'paused';
+            }
+        }
+
+        function selectTrack(index) {
+            currentTrackIndex = index;
+            hasStarted = true;
+            seekTo(tracks[index].start);
+            updateTrackUI();
+            play();
+        }
+
+        function nextTrack() {
+            const i = getAdjacentIndex(1);
+            if (i === -1) return;
+            selectTrack(i);
+        }
+
+        function prevTrack() {
+            const i = getAdjacentIndex(-1);
+            if (i === -1) return;
+            selectTrack(i);
+        }
+
+        // Contrôles du système (écran de verrouillage / barre de notifications)
+        let lastPositionUpdate = 0;
+        function updateMediaSession() {
+            if (!('mediaSession' in navigator)) return;
+            const track = tracks[currentTrackIndex];
+
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: track.title,
+                artist: 'Romain',
+                album: 'Playlist pour Mélissa',
+                artwork: [
+                    { src: 'artwork-192.png', sizes: '192x192', type: 'image/png' },
+                    { src: 'artwork-512.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('play', () => play());
+            navigator.mediaSession.setActionHandler('pause', () => pause());
+            navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
+            navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
+            updatePositionState();
+        }
+
+        function updatePositionState() {
+            if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+            const track = tracks[currentTrackIndex];
+            const position = Math.min(Math.max(audio.currentTime - track.start, 0), track.duration);
+            try {
+                navigator.mediaSession.setPositionState({
+                    duration: track.duration,
+                    position: position,
+                    playbackRate: audio.playbackRate || 1
+                });
+            } catch (e) {}
+        }
+
+        // Suivi de la lecture et passage d'une musique à l'autre
+        audio.addEventListener('timeupdate', () => {
+            const t = audio.currentTime;
+            const track = tracks[currentTrackIndex];
+            const end = trackEnd(currentTrackIndex);
+
+            if (repeatMode === 'one') {
+                if (t >= end - LEAD) {
+                    seekTo(track.start);
+                    return;
+                }
+            } else if (t >= end - LEAD) {
+                const next = getAdjacentIndex(1);
+                if (next === -1) {
+                    pause();
+                    return;
+                }
+                if (next === currentTrackIndex + 1) {
+                    // Musique suivante contiguë dans le fichier : la lecture
+                    // continue d'elle-même, sans le moindre saut
+                    if (t >= end) {
+                        currentTrackIndex = next;
+                        updateTrackUI();
+                    }
+                } else {
+                    currentTrackIndex = next;
+                    seekTo(tracks[next].start);
+                    updateTrackUI();
+                    return;
+                }
+            }
+
+            const elapsed = Math.min(Math.max(t - tracks[currentTrackIndex].start, 0), tracks[currentTrackIndex].duration);
+            progressFill.style.width = (elapsed / tracks[currentTrackIndex].duration * 100) + '%';
+            currentTimeEl.textContent = formatTime(elapsed);
+            totalTimeEl.textContent = formatTime(tracks[currentTrackIndex].duration);
+
+            const now = Date.now();
+            if (now - lastPositionUpdate > 1000) {
+                lastPositionUpdate = now;
+                updatePositionState();
+            }
+        });
+
+        // Sécurité : fin du fichier complet (ne devrait pas être atteinte)
+        audio.addEventListener('ended', () => {
+            const i = getAdjacentIndex(1);
+            if (i === -1) {
+                pause();
+                return;
+            }
+            currentTrackIndex = i;
+            seekTo(tracks[i].start);
+            updateTrackUI();
+            play();
+        });
+
+        // Si le chargement échoue, réessayer une fois plutôt que de s'arrêter
+        let retried = false;
+        audio.addEventListener('error', () => {
+            if (retried || !isPlaying) return;
+            retried = true;
+            const position = audio.currentTime;
+            audio.load();
+            seekTo(position);
+            audio.play().catch(() => {});
+        });
+        audio.addEventListener('playing', () => {
+            retried = false;
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+            updateMediaSession();
+        });
+
+        // Boutons
+        playBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                pause();
+                return;
+            }
+            if (!hasStarted || !isLiked(currentTrackIndex)) {
+                const first = tracks.findIndex((t, i) => isLiked(i));
+                if (first === -1) return;
+                selectTrack(first);
+                return;
+            }
+            play();
+        });
+
+        prevBtn.addEventListener('click', prevTrack);
+        nextBtn.addEventListener('click', nextTrack);
+
+        repeatBtn.addEventListener('click', () => {
+            repeatMode = repeatMode === 'all' ? 'one' : 'all';
+            repeatBtn.classList.toggle('repeat-one', repeatMode === 'one');
+        });
+
+        // Barre de progression : déplacement à l'intérieur de la musique en cours
+        function seekFromPointer(clientX) {
+            const rect = progressBar.getBoundingClientRect();
+            let percent = (clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent));
+            const track = tracks[currentTrackIndex];
+            seekTo(track.start + percent * track.duration);
+            updatePositionState();
+        }
+
+        let isDragging = false;
+
+        progressBar.addEventListener('click', (e) => {
+            if (!hasStarted) return;
+            seekFromPointer(e.clientX);
+        });
+
+        const startDrag = (e) => {
+            if (!hasStarted) return;
+            isDragging = true;
+            progressBar.classList.add('dragging');
+            progressFill.classList.add('dragging');
+            seekFromPointer(e.touches ? e.touches[0].clientX : e.clientX);
+            e.preventDefault();
+        };
+
+        const onDrag = (e) => {
+            if (!isDragging) return;
+            seekFromPointer(e.touches ? e.touches[0].clientX : e.clientX);
+            e.preventDefault();
+        };
+
+        const endDrag = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            progressBar.classList.remove('dragging');
+            progressFill.classList.remove('dragging');
+            e.preventDefault();
+        };
+
+        progressBar.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', endDrag);
+        progressBar.addEventListener('touchstart', startDrag, { passive: false });
+        document.addEventListener('touchmove', onDrag, { passive: false });
+        document.addEventListener('touchend', endDrag, { passive: false });
+
+        // Initialisation
+        initPlaylist();
+        updateTrackUI();
+    </script>
 </body>
 </html>
