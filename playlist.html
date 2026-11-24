@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playlist - Mélissa 18 ans</title>
-    <meta name="description" content="Ta playlist personnalisée : 5 musiques originales à découvrir. Like tes préférées et profite de la musique.">
+    <meta name="description" content="Ta playlist personnalisée : 6 musiques originales à découvrir. Like tes préférées et profite de la musique.">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png">
@@ -417,13 +417,13 @@
     </section>
 
     <!-- Audio element caché -->
-    <audio id="mainAudio" src="audio/playlist-v2.mp3" preload="auto"></audio>
+    <audio id="mainAudio" src="audio/playlist-v3.mp3" preload="auto"></audio>
 
     <script>
         console.log('%c🎉 Joyeux Anniversaire Mélissa ! 🎂', 'font-size: 24px; color: #d4a574; font-weight: bold;');
         console.log('%cCe site a été créé avec amour par Romain ❤️', 'font-size: 14px; color: #667eea;');
 
-        // Les 5 musiques sont réunies dans UN SEUL fichier audio, dans cet ordre.
+        // Les 6 musiques sont réunies dans UN SEUL fichier audio, dans cet ordre.
         // Changer de musique consiste donc à se déplacer dans ce fichier, jamais
         // à changer la source du lecteur : la lecture n'est ainsi jamais
         // interrompue, et le lecteur du système (écran de verrouillage, barre de
@@ -433,7 +433,8 @@
             { id: 8,  title: "Nouvelles couleurs",  start: 103.993, duration: 98.353 },
             { id: 9,  title: "Ma passion",          start: 202.346, duration: 104.320 },
             { id: 10, title: "Big Bang",            start: 306.666, duration: 114.920 },
-            { id: 11, title: "Nuage",               start: 421.586, duration: 152.268 }
+            { id: 11, title: "Nuage",               start: 421.586, duration: 152.2655625 },
+            { id: 12, title: "Gris",                start: 573.8515625, duration: 156.52620833333333 }
         ];
 
         // Marge prise avant la fin d'une musique pour enchaîner sans laisser
@@ -452,6 +453,10 @@
         likedTracks = likedTracks.filter(id => allTrackIds.includes(id));
         if (likedTracks.length === 0) {
             likedTracks = allTrackIds.slice();
+        }
+        if (!localStorage.getItem('playlistGrisAdded')) {
+            if (!likedTracks.includes(12)) likedTracks.push(12);
+            localStorage.setItem('playlistGrisAdded', 'true');
         }
         localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
 
